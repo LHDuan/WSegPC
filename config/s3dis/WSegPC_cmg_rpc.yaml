@@ -1,0 +1,121 @@
+DATA:
+  data_name: s3dis_cross
+  data_root: /root/WSegPC_data/s3dis/s3dis_3d/
+  data_root_img: /root/WSegPC_data/s3dis/s3dis_2d/
+  data_root_sp: /root/WSegPC_data/s3dis/s3dis_3d/initial_superpoints_wypr/
+  classes: 13
+  aug: True
+  voxelSize: 0.04
+  loop: 16
+  ignore_label: 255
+  view_num: 6
+  mix3d: 0.00
+  mix3d_step: False
+  
+  train_split: train
+  val_split: val
+
+  # pseudo-label
+  warm_iter_ps: 2400
+  pseudo_dir: 
+  pseudo_key: pred
+  pseudo_label_3d: False
+  pseudo_label_2d: False
+  pseudo_label_3d_weight: 1.0
+  pseudo_label_2d_weight: 1.0
+
+MODEL:
+  # model
+  arch: WSegPC
+  warm_iter_cam: 1
+  # 3d model
+  arch_3d: MinkUNet18A
+  in_channel: 6
+  cam_3d_weight: 1.0
+  # 2d model
+  layers_2d: 50
+  image_weights: imagenet
+  cam_2d_weight: 1.0
+
+  # cross-modal feature guidance learning
+  cmg_loss: True
+  warm_iter_cmg: 1
+  proj_3d_channel: 2048
+  cmg_3d_num_matches: 512
+  cmg_3d_weight: 0.05
+  proj_2d_channel: 96
+  cmg_2d_num_matches: 512
+  cmg_2d_weight: 0.05  
+
+  # region-point consistency learning
+  rpc_loss: True
+  warm_iter_rpc: 2400
+  rpc_p_cutoff: 0.8
+  rpc_3d_weight: 1.0
+  rpc_2d_weight: 1.0
+
+  # teacher student model 
+  ts_model: True
+  ts_model_epoch: -1
+  ts_model_keep_rate: 0.999
+  ts_model_update_freq: 1
+
+TRAIN:
+  Supervise: False
+  sync_bn_2d: True
+  sync_bn_3d: True
+
+  val_with_cls: True
+  
+  # optimizer and scheduler
+  base_lr_2d: 0.05
+  base_lr_3d: 0.05
+  
+  momentum: 0.9
+  weight_decay: 0.0001
+  
+  scheduler: Poly
+  scheduler_update: step
+  power: 0.9
+  
+  # train setting
+  train_gpu: [0]
+  workers: 8  # data loader workers
+  batch_size: 4  # batch size for training
+  batch_size_val: 8  # batch size for validation during training, memory and speed tradeoff
+  epochs: 25
+  early_stop_epoch: 5
+  start_epoch: 0
+  
+  manual_seed: 1463
+  print_freq: 100
+  empty_cache_freq: 100
+  save_freq: 1
+  save_path: 
+  weight: 
+  resume: 
+  evaluate: True  # evaluate on validation set, extra gpu memory needed and small batch_size_val is recommend
+  eval_freq: 1
+  sleep_time: 0
+
+Distributed:
+  dist_url: tcp://127.0.0.1:6787
+  dist_backend: 'nccl'
+  multiprocessing_distributed: True
+  world_size: 1
+  rank: 0
+
+TEST:
+  split: train  # split in [train, val and test]
+  val_benchmark: True
+  test_workers: 8
+  test_gpu: [0]
+  test_batch_size: 4
+  model_path: 
+  save_folder: 
+  test_repeats: 1
+  save_3d: False
+  use_cls: True
+  use_ema: True
+  use_sp: False
+  use_sp_with_self: False
